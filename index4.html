@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark" data-theme="cyan">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="VirtualLab: circuit, projectile and pendulum practicals you can do in the browser.">
+  <title>VirtualLab</title>
+  <!-- Theme pehle hi set ho jaata hai (paint se pehle), taaki rang ka flash na aaye -->
+  <script>(function(){var t='cyan';try{var s=localStorage.getItem('vlab-theme');if(s==='green'||s==='cyan'||s==='pink')t=s;}catch(e){}document.documentElement.setAttribute('data-theme',t);})();</script>
+  <!-- Bootstrap 5 CSS (CDN) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Fonts: Bricolage Grotesque for headings, IBM Plex Sans for text, IBM Plex Mono for numbers -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Hamara apna CSS (Bootstrap ke baad, taaki colours override ho sakein) -->
+  <link href="style4.css" rel="stylesheet">
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  <!-- ========== Top navigation + role switch ========== -->
+  <header>
+    <nav class="navbar navbar-expand-lg vl-navbar" aria-label="Main navigation">
+      <div class="container-xxl">
+        <a class="navbar-brand" href="#dashboard">
+          <span class="brand-mark"><svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M7.5 2h5M8.5 2v5.5L3.6 16a1.4 1.4 0 0 0 1.2 2.1h10.4a1.4 1.4 0 0 0 1.2-2.1L11.5 7.5V2" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M6 12.5h8" stroke="currentColor" stroke-width="2"/></svg></span>
+          <span>VirtualLab</span>
+        </a>
+
+        <!-- Student / Teacher switch (hamesha dikhta hai, phone par bhi) -->
+        <div class="role-switch order-lg-last ms-auto ms-lg-3">
+          <label for="role-select" class="role-label">View as</label>
+          <select id="role-select" class="form-select form-select-sm" aria-label="Choose Student or Teacher view">
+            <option value="student">Student</option>
+            <option value="teacher">Teacher</option>
+          </select>
+        </div>
+
+        <button class="navbar-toggler ms-2" type="button" data-bs-toggle="collapse"
+                data-bs-target="#main-nav" aria-controls="main-nav" aria-expanded="false"
+                aria-label="Open or close the menu">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="main-nav">
+          <ul class="navbar-nav mx-lg-auto">
+            <li class="nav-item"><a class="nav-link" data-screen="dashboard" href="#dashboard">Dashboard</a></li>
+            <li class="nav-item"><a class="nav-link" data-screen="circuit" href="#circuit">Circuit Lab</a></li>
+            <li class="nav-item"><a class="nav-link" data-screen="projectile" href="#projectile">Projectile</a></li>
+            <li class="nav-item"><a class="nav-link" data-screen="pendulum" href="#pendulum">Pendulum</a></li>
+            <li class="nav-item"><a class="nav-link" data-screen="results" href="#results">Results</a></li>
+            <!-- Sirf teacher ko dikhta hai -->
+            <li class="nav-item" data-role="teacher" hidden><a class="nav-link" data-screen="teacher" href="#teacher">Teacher Review</a></li>
+            <li class="nav-item"><a class="nav-link" data-screen="help" href="#help">How it works</a></li>
+          </ul>
+          <!-- Colour theme switch: phone par menu ke andar, laptop par navbar mein -->
+          <div class="theme-switch" role="group" aria-label="Colour theme">
+            <span class="theme-switch-label" aria-hidden="true">Colour</span>
+            <button type="button" class="theme-dot" data-theme-choice="green" aria-label="Green theme" aria-pressed="false" title="Green"></button>
+            <button type="button" class="theme-dot" data-theme-choice="cyan" aria-label="Cyan theme" aria-pressed="true" title="Cyan"></button>
+            <button type="button" class="theme-dot" data-theme-choice="pink" aria-label="Pink theme" aria-pressed="false" title="Pink"></button>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main-content" class="container-xxl py-3">
+    <!-- Global messages (storage error, role blocked, etc.) -->
+    <div id="global-feedback" aria-live="polite"></div>
+
+    <!-- Loading indicator: app start par dikhta hai -->
+    <div id="app-loading" class="state-box text-center" role="status">
+      <div class="spinner-border text-primary" aria-hidden="true"></div>
+      <p class="mt-3 mb-0">Loading...</p>
+    </div>
+    <noscript><div class="alert alert-danger">VirtualLab needs JavaScript. Please turn it on in your browser.</div></noscript>
+
+    <!-- ========== Screen 1: Dashboard ========== -->
+    <section id="screen-dashboard" class="screen" aria-labelledby="dashboard-title" hidden>
+
+      <!-- ===== FULL-VIEWPORT HERO ===== -->
+      <div class="fp2-hero">
+
+        <!-- Glowing blurred orbs -->
+        <div class="fp2-orb fp2-orb1" aria-hidden="true"></div>
+        <div class="fp2-orb fp2-orb2" aria-hidden="true"></div>
+        <div class="fp2-orb fp2-orb3" aria-hidden="true"></div>
+
+        <!-- Centred content -->
+        <div class="fp2-inner">
+
+          <!-- Live-status eyebrow -->
+          <div class="fp2-eyebrow">
+            <span class="fp2-pulse" aria-hidden="true"></span>
+            OJT Project &nbsp;·&nbsp; Physics Simulator &nbsp;·&nbsp; 2026
+          </div>
+
+          <!-- Massive brand title -->
+          <h1 id="dashboard-title" tabindex="-1" class="fp2-title">
+            <span class="fp2-t-muted">Virtual</span><span class="fp2-t-hl">Lab</span>
+          </h1>
+
+          <!-- Cycling typewriter: [ Circuit Lab ] → [ Projectile Motion ] → [ Simple Pendulum ] -->
+          <div class="fp2-typerow" aria-label="Circuit Lab · Projectile Motion · Simple Pendulum">
+            <span class="fp2-bracket" aria-hidden="true">[</span>
+            <div class="fp2-cycling">
+              <span class="fp2-cy fp2-cy1">Circuit Lab</span>
+              <span class="fp2-cy fp2-cy2">Projectile Motion</span>
+              <span class="fp2-cy fp2-cy3">Simple Pendulum</span>
+            </div>
+            <span class="fp2-bracket" aria-hidden="true">]</span>
+          </div>
+
+          <p class="fp2-sub">
+            A physics lab that runs entirely in your browser.<br>
+            Drag components, run simulations, and verify against real formulas.<br>
+            <strong style="color:var(--text)">No install. No login. Just science.</strong>
+          </p>
+
+          <div class="fp2-actions">
+            <a class="fp2-btn-primary" href="#circuit">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <circle cx="4" cy="10" r="2" stroke="currentColor" stroke-width="2"/>
+                <circle cx="16" cy="4" r="2" stroke="currentColor" stroke-width="2"/>
+                <circle cx="16" cy="16" r="2" stroke="currentColor" stroke-width="2"/>
+                <path d="M6 10h4M14 4H10v12h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Open Circuit Lab
+            </a>
+            <a class="fp2-btn-outline" href="#results">View Saved Results →</a>
+          </div>
+
+          <p class="fp2-byline">by <strong>Harshi Yadav</strong> &amp; <strong>Gourav Garg</strong></p>
+        </div>
+
+        <!-- Scroll-down arrow -->
+        <div class="fp2-scroll" aria-hidden="true">
+          <div class="fp2-scroll-line"></div>
+          <div class="fp2-scroll-dot"></div>
+        </div>
+      </div><!-- /fp2-hero -->
+
+      <!-- ===== SCROLLING TICKER ===== -->
+      <div class="fp2-ticker-wrap" aria-hidden="true">
+        <div class="fp2-ticker">
+          <span>Circuit Lab</span><span class="fp2-tk-sep">◆</span>
+          <span>Ohm's Law</span><span class="fp2-tk-sep">◆</span>
+          <span>Drag &amp; Drop</span><span class="fp2-tk-sep">◆</span>
+          <span>Projectile Motion</span><span class="fp2-tk-sep">◆</span>
+          <span>Range Formula</span><span class="fp2-tk-sep">◆</span>
+          <span>Simple Pendulum</span><span class="fp2-tk-sep">◆</span>
+          <span>T = 2π√(L/g)</span><span class="fp2-tk-sep">◆</span>
+          <span>Series &amp; Parallel</span><span class="fp2-tk-sep">◆</span>
+          <span>Earth · Moon · Mars</span><span class="fp2-tk-sep">◆</span>
+          <span>Save Results</span><span class="fp2-tk-sep">◆</span>
+          <!-- duplicate for seamless loop -->
+          <span>Circuit Lab</span><span class="fp2-tk-sep">◆</span>
+          <span>Ohm's Law</span><span class="fp2-tk-sep">◆</span>
+          <span>Drag &amp; Drop</span><span class="fp2-tk-sep">◆</span>
+          <span>Projectile Motion</span><span class="fp2-tk-sep">◆</span>
+          <span>Range Formula</span><span class="fp2-tk-sep">◆</span>
+          <span>Simple Pendulum</span><span class="fp2-tk-sep">◆</span>
+          <span>T = 2π√(L/g)</span><span class="fp2-tk-sep">◆</span>
+          <span>Series &amp; Parallel</span><span class="fp2-tk-sep">◆</span>
+          <span>Earth · Moon · Mars</span><span class="fp2-tk-sep">◆</span>
+          <span>Save Results</span><span class="fp2-tk-sep">◆</span>
+        </div>
+      </div>
+
+      <!-- ===== BIG NUMBERED LAB ROWS ===== -->
+      <div class="fp2-labs" role="list">
+
+        <!-- 01 Circuit Lab -->
+        <a class="fp2-lab" href="#circuit" role="listitem" aria-label="Circuit Lab">
+          <span class="fp2-lab-num" aria-hidden="true">01</span>
+          <div class="fp2-lab-mid">
+            <span class="fp2-lab-name">Circuit Lab</span>
+            <span class="fp2-lab-tags">
+              <span>Drag &amp; Drop</span>
+              <span>Ohm's Law</span>
+              <span>Series &amp; Parallel</span>
+              <span>Live Simulation</span>
+            </span>
+          </div>
+          <!-- Animated circuit SVG -->
+          <div class="fp2-lab-vis" aria-hidden="true">
+            <svg viewBox="0 0 130 60" fill="none" width="130" height="60">
+              <!-- Battery -->
+              <rect x="4" y="23" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/>
+              <line x1="18" y1="30" x2="30" y2="30" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <!-- Resistor 1 -->
+              <rect x="30" y="26" width="22" height="8" rx="1.5" stroke="currentColor" stroke-width="1.6"/>
+              <line x1="52" y1="30" x2="64" y2="30" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <!-- Resistor 2 -->
+              <rect x="64" y="26" width="22" height="8" rx="1.5" stroke="currentColor" stroke-width="1.6"/>
+              <line x1="86" y1="30" x2="100" y2="30" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <!-- Bulb -->
+              <circle cx="109" cy="30" r="8" stroke="currentColor" stroke-width="1.6"/>
+              <line x1="117" y1="30" x2="124" y2="30" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <!-- Top closing wire -->
+              <path d="M124,30 V10 H4 V23" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- Animated electron dot -->
+              <circle r="3" fill="currentColor" opacity="0.9">
+                <animateMotion dur="3.5s" repeatCount="indefinite">
+                  <mpath href="#circ-loop"/>
+                </animateMotion>
+              </circle>
+              <path id="circ-loop" d="M18,30 H100 L124,30 L124,10 H4 L4,30 H18" fill="none"/>
+            </svg>
+          </div>
+          <span class="fp2-lab-go" aria-hidden="true">Open →</span>
+        </a>
+
+        <!-- 02 Projectile Motion -->
+        <a class="fp2-lab" href="#projectile" role="listitem" aria-label="Projectile Motion">
+          <span class="fp2-lab-num" aria-hidden="true">02</span>
+          <div class="fp2-lab-mid">
+            <span class="fp2-lab-name">Projectile Motion</span>
+            <span class="fp2-lab-tags">
+              <span>Range</span>
+              <span>Max Height</span>
+              <span>Time of Flight</span>
+              <span>Earth · Moon · Mars</span>
+            </span>
+          </div>
+          <!-- Animated projectile arc -->
+          <div class="fp2-lab-vis" aria-hidden="true">
+            <svg viewBox="0 0 130 60" fill="none" width="130" height="60">
+              <!-- Ground -->
+              <line x1="4" y1="54" x2="126" y2="54" stroke="currentColor" stroke-width="1.2" opacity="0.35"/>
+              <!-- Arc path (dashed) -->
+              <path d="M8,54 Q52,2 122,26" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 3" stroke-linecap="round" opacity="0.6"/>
+              <!-- Launch angle -->
+              <line x1="8" y1="54" x2="24" y2="54" stroke="currentColor" stroke-width="1.2" opacity="0.45"/>
+              <line x1="8" y1="54" x2="20" y2="38" stroke="currentColor" stroke-width="1.2" opacity="0.45"/>
+              <!-- Landing dot -->
+              <circle cx="122" cy="26" r="3.5" fill="currentColor" opacity="0.45"/>
+              <!-- Animated ball -->
+              <circle r="5" fill="currentColor">
+                <animateMotion dur="2.4s" repeatCount="indefinite" keyTimes="0;0.88;1" keySplines="0.1,0.8,0.2,1; 0,0,0,0" calcMode="spline">
+                  <mpath href="#arc-path"/>
+                </animateMotion>
+                <animate attributeName="opacity" dur="2.4s" repeatCount="indefinite" values="1;1;0"/>
+              </circle>
+              <path id="arc-path" d="M8,54 Q52,2 122,26" fill="none"/>
+            </svg>
+          </div>
+          <span class="fp2-lab-go" aria-hidden="true">Open →</span>
+        </a>
+
+        <!-- 03 Simple Pendulum -->
+        <a class="fp2-lab" href="#pendulum" role="listitem" aria-label="Simple Pendulum">
+          <span class="fp2-lab-num" aria-hidden="true">03</span>
+          <div class="fp2-lab-mid">
+            <span class="fp2-lab-name">Simple Pendulum</span>
+            <span class="fp2-lab-tags">
+              <span>T = 2π√(L/g)</span>
+              <span>Small-angle Formula</span>
+              <span>RK4 Simulation</span>
+            </span>
+          </div>
+          <!-- Animated pendulum -->
+          <div class="fp2-lab-vis" aria-hidden="true">
+            <svg viewBox="0 0 130 60" fill="none" width="130" height="60" style="overflow:visible">
+              <!-- Ceiling bar -->
+              <line x1="45" y1="6" x2="85" y2="6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+              <!-- Ghost left -->
+              <line x1="65" y1="6" x2="38" y2="52" stroke="currentColor" stroke-width="1.2" opacity="0.2" stroke-dasharray="2 2"/>
+              <circle cx="38" cy="52" r="6" stroke="currentColor" stroke-width="1.2" opacity="0.2"/>
+              <!-- Ghost right -->
+              <line x1="65" y1="6" x2="92" y2="52" stroke="currentColor" stroke-width="1.2" opacity="0.2" stroke-dasharray="2 2"/>
+              <circle cx="92" cy="52" r="6" stroke="currentColor" stroke-width="1.2" opacity="0.2"/>
+              <!-- Swing arc hint -->
+              <path d="M40,47 Q65,32 90,47" stroke="currentColor" stroke-width="1" opacity="0.25" fill="none" stroke-linecap="round"/>
+              <!-- Animated pendulum group -->
+              <g class="fp2-pend-swing">
+                <line x1="65" y1="6" x2="65" y2="49" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <circle cx="65" cy="49" r="8" stroke="currentColor" stroke-width="1.8" fill="rgba(0,0,0,0.3)"/>
+              </g>
+            </svg>
+          </div>
+          <span class="fp2-lab-go" aria-hidden="true">Open →</span>
+        </a>
+
+      </div><!-- /fp2-labs -->
+
+      <!-- Stats strip -->
+      <div class="fp2-stats" aria-label="Quick facts">
+        <div class="fp2-stat"><span class="fp2-snum">3</span><span class="fp2-slabel">Physics Labs</span></div>
+        <div class="fp2-sdiv" aria-hidden="true"></div>
+        <div class="fp2-stat"><span class="fp2-snum">∞</span><span class="fp2-slabel">Experiments</span></div>
+        <div class="fp2-sdiv" aria-hidden="true"></div>
+        <div class="fp2-stat"><span class="fp2-snum">0</span><span class="fp2-slabel">Installs Needed</span></div>
+        <div class="fp2-sdiv" aria-hidden="true"></div>
+        <div class="fp2-stat"><span class="fp2-snum">100%</span><span class="fp2-slabel">In Browser</span></div>
+      </div>
+
+      <div id="dashboard-continue"></div>
+
+      <!-- Teacher overview -->
+      <div class="card mb-4" data-role="teacher" hidden>
+        <div class="card-body">
+          <h2 class="h5 card-title">Teacher overview</h2>
+          <p id="dashboard-teacher-summary" class="mb-2"></p>
+          <a class="btn btn-outline-primary" href="#teacher">Open Teacher Review</a>
+        </div>
+      </div>
+
+      <section class="dash-block" aria-labelledby="labs-title">
+        <div class="dash-side">
+          <h2 class="section-title" id="labs-title">Pick a lab and start.</h2>
+          <p class="side-note">Your runs are saved in this browser, so you can come back to them later.</p>
+        </div>
+        <div class="dash-main"><div id="experiment-cards" class="lab-list"></div></div>
+      </section>
+
+      <section class="dash-block" aria-labelledby="steps-title">
+        <div class="dash-side">
+          <h2 class="section-title" id="steps-title">How a run goes</h2>
+        </div>
+        <div class="dash-main">
+          <ol class="steps-list">
+            <li><b>Set it up.</b> Pick a lab, then place the parts or type your starting values.</li>
+            <li><b>Run it.</b> The picture and the readings change as you change the numbers.</li>
+            <li><b>Check it.</b> Compare with the formula. If it is close enough, save it. If not, try again.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="dash-block" aria-labelledby="recent-title">
+        <div class="dash-side">
+          <h2 class="section-title" id="recent-title">Recently saved</h2>
+        </div>
+        <div class="dash-main"><div id="dashboard-recent"></div></div>
+      </section>
+    </section>
+
+    <!-- ========== Screen 2: Circuit Lab ========== -->
+    <section id="screen-circuit" class="screen" aria-labelledby="circuit-title" hidden>
+      <h1 id="circuit-title" tabindex="-1">Circuit Lab</h1>
+      <p class="text-muted-vl">Drag parts from the tray onto the lab table, join the dots with wires, then press Start simulation.</p>
+
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="card lab-card">
+            <div class="card-body">
+              <!-- Toolbar -->
+              <div class="lab-toolbar" role="toolbar" aria-label="Lab table tools">
+                <button type="button" class="btn btn-primary" id="btn-sim" aria-pressed="false">Start simulation</button>
+                <button type="button" class="btn btn-outline-secondary" id="btn-rotate" aria-label="Rotate the selected part (shortcut R)">Rotate</button>
+                <button type="button" class="btn btn-outline-secondary" id="btn-delete" aria-label="Delete the selected part or wire (shortcut Delete)">Delete</button>
+                <button type="button" class="btn btn-outline-secondary" id="btn-reset-circuit" aria-label="Clear the whole table">Clear table</button>
+                <span class="lab-toolbar-sep" aria-hidden="true"></span>
+                <button type="button" class="btn btn-outline-primary" id="btn-preset-series">Series preset</button>
+                <button type="button" class="btn btn-outline-primary" id="btn-preset-parallel">Parallel preset</button>
+              </div>
+              <div class="lab-bench">
+                <!-- Parts tray: left on laptop, a horizontal strip on phone -->
+                <div id="palette" class="lab-tray" role="group" aria-label="Parts tray">
+                  <div id="palette-items" class="lab-tray-items"></div>
+                </div>
+                <!-- Lab table -->
+                <div id="circuit-canvas" class="lab-table canvas-box" tabindex="0" aria-label="Lab table. Scrolls sideways on small screens."></div>
+              </div>
+              <div id="circuit-status" class="lab-status status-info" role="status" aria-live="polite" aria-atomic="true"></div>
+              <div id="circuit-feedback" aria-live="polite" class="mt-2"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-5">
+          <div class="card">
+            <div class="card-body">
+              <h2 class="h5">Info panel</h2>
+              <div id="circuit-readouts"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3">
+          <div class="card">
+            <div class="card-body">
+              <h2 class="h5">Properties</h2>
+              <div id="circuit-controls"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="card">
+            <div class="card-body">
+              <h2 class="h5">Save this circuit</h2>
+              <form id="circuit-save-form" novalidate>
+                <label for="circuit-name" class="form-label">Result name</label>
+                <input type="text" id="circuit-name" class="form-control" maxlength="60" placeholder="e.g. My first circuit" aria-describedby="circuit-name-error">
+                <div class="field-error" id="circuit-name-error" role="alert"></div>
+                <button type="submit" class="btn btn-primary mt-2">Save result</button>
+              </form>
+              <div id="circuit-save-feedback" aria-live="polite" class="mt-2"></div>
+              <hr>
+              <label for="saved-circuit-select" class="form-label">Load a saved circuit</label>
+              <select id="saved-circuit-select" class="form-select mb-2"></select>
+              <button type="button" class="btn btn-outline-primary" id="btn-load-circuit">Load</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== Screen 3: Projectile Motion ========== -->
+    <section id="screen-projectile" class="screen" aria-labelledby="projectile-title" hidden>
+      <h1 id="projectile-title" tabindex="-1">Projectile Motion</h1>
+      <p class="text-muted-vl">Throw a ball and compare the range, time in the air and maximum height with the formulas.</p>
+      <div class="row g-3">
+        <div class="col-lg-4">
+          <div class="card"><div class="card-body">
+            <h2 class="h5">Controls</h2>
+            <form id="projectile-form" novalidate>
+              <div class="mb-3">
+                <label for="proj-speed" class="form-label">Launch speed (m/s)</label>
+                <div class="control-pair">
+                  <input type="range" class="form-range" id="proj-speed-range" min="1" max="100" step="1" value="20" aria-label="Launch speed slider">
+                  <input type="number" class="form-control" id="proj-speed" value="20" step="any" aria-label="Launch speed in metres per second" aria-describedby="proj-speed-error">
+                </div>
+                <div class="field-error" id="proj-speed-error" role="alert"></div>
+              </div>
+              <div class="mb-3">
+                <label for="proj-angle" class="form-label">Launch angle (degrees)</label>
+                <div class="control-pair">
+                  <input type="range" class="form-range" id="proj-angle-range" min="1" max="89" step="1" value="45" aria-label="Launch angle slider">
+                  <input type="number" class="form-control" id="proj-angle" value="45" step="any" aria-label="Launch angle in degrees" aria-describedby="proj-angle-error">
+                </div>
+                <div class="field-error" id="proj-angle-error" role="alert"></div>
+              </div>
+              <div class="mb-3">
+                <label for="proj-gravity" class="form-label">Gravity</label>
+                <select id="proj-gravity" class="form-select" aria-label="Gravity">
+                  <option value="9.81">Earth (9.81 m/s²)</option>
+                  <option value="1.62">Moon (1.62 m/s²)</option>
+                  <option value="3.71">Mars (3.71 m/s²)</option>
+                </select>
+              </div>
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary" id="proj-run">Run</button>
+                <button type="button" class="btn btn-outline-secondary" id="proj-reset">Reset</button>
+              </div>
+            </form>
+          </div></div>
+        </div>
+        <div class="col-lg-8">
+          <div class="card"><div class="card-body">
+            <h2 class="h5">Animation</h2>
+            <div id="proj-canvas" class="canvas-box" role="img" aria-label="Projectile path animation"></div>
+          </div></div>
+          <div class="card mt-3"><div class="card-body">
+            <h2 class="h5">Results</h2>
+            <div id="proj-readouts" aria-live="polite" aria-atomic="true"></div>
+            <form id="proj-save-form" class="mt-3" novalidate>
+              <label for="proj-name" class="form-label">Result name</label>
+              <div class="d-flex gap-2 flex-wrap">
+                <input type="text" id="proj-name" class="form-control name-input" maxlength="60" placeholder="e.g. Football kick" aria-label="Result name" aria-describedby="proj-name-error">
+                <button type="submit" class="btn btn-primary">Save result</button>
+              </div>
+              <div class="field-error" id="proj-name-error" role="alert"></div>
+            </form>
+            <div id="proj-feedback" aria-live="polite" class="mt-2"></div>
+          </div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== Screen 4: Simple Pendulum ========== -->
+    <section id="screen-pendulum" class="screen" aria-labelledby="pendulum-title" hidden>
+      <h1 id="pendulum-title" tabindex="-1">Simple Pendulum</h1>
+      <p class="text-muted-vl">Swing a pendulum and compare the time of one swing with T = 2π√(L/g).</p>
+      <div class="row g-3">
+        <div class="col-lg-4">
+          <div class="card"><div class="card-body">
+            <h2 class="h5">Controls</h2>
+            <form id="pendulum-form" novalidate>
+              <div class="mb-3">
+                <label for="pend-length" class="form-label">String length (m)</label>
+                <div class="control-pair">
+                  <input type="range" class="form-range" id="pend-length-range" min="0.1" max="5" step="0.1" value="1" aria-label="String length slider">
+                  <input type="number" class="form-control" id="pend-length" value="1" step="any" aria-label="String length in metres" aria-describedby="pend-length-error">
+                </div>
+                <div class="field-error" id="pend-length-error" role="alert"></div>
+              </div>
+              <div class="mb-3">
+                <label for="pend-angle" class="form-label">Start angle (degrees)</label>
+                <div class="control-pair">
+                  <input type="range" class="form-range" id="pend-angle-range" min="1" max="80" step="1" value="10" aria-label="Start angle slider">
+                  <input type="number" class="form-control" id="pend-angle" value="10" step="any" aria-label="Start angle in degrees" aria-describedby="pend-angle-error">
+                </div>
+                <div class="field-error" id="pend-angle-error" role="alert"></div>
+              </div>
+              <div class="mb-3">
+                <label for="pend-gravity" class="form-label">Gravity</label>
+                <select id="pend-gravity" class="form-select" aria-label="Gravity">
+                  <option value="9.81">Earth (9.81 m/s²)</option>
+                  <option value="1.62">Moon (1.62 m/s²)</option>
+                  <option value="3.71">Mars (3.71 m/s²)</option>
+                </select>
+              </div>
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary" id="pend-run">Run</button>
+                <button type="button" class="btn btn-outline-secondary" id="pend-reset">Reset</button>
+              </div>
+            </form>
+          </div></div>
+        </div>
+        <div class="col-lg-8">
+          <div class="card"><div class="card-body">
+            <h2 class="h5">Animation</h2>
+            <div id="pend-canvas" class="canvas-box" role="img" aria-label="Pendulum swing animation"></div>
+          </div></div>
+          <div class="card mt-3"><div class="card-body">
+            <h2 class="h5">Results</h2>
+            <div id="pend-readouts" aria-live="polite" aria-atomic="true"></div>
+            <form id="pend-save-form" class="mt-3" novalidate>
+              <label for="pend-name" class="form-label">Result name</label>
+              <div class="d-flex gap-2 flex-wrap">
+                <input type="text" id="pend-name" class="form-control name-input" maxlength="60" placeholder="e.g. 1 m pendulum" aria-label="Result name" aria-describedby="pend-name-error">
+                <button type="submit" class="btn btn-primary">Save result</button>
+              </div>
+              <div class="field-error" id="pend-name-error" role="alert"></div>
+            </form>
+            <div id="pend-feedback" aria-live="polite" class="mt-2"></div>
+          </div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== Screen 5: Results ========== -->
+    <section id="screen-results" class="screen" aria-labelledby="results-title" hidden>
+      <h1 id="results-title" tabindex="-1">Results</h1>
+      <p class="text-muted-vl">Everything you saved is here. Search by name or filter by lab.</p>
+
+      <div class="card mb-3"><div class="card-body">
+        <form id="filter-form" class="row g-2 align-items-end" novalidate onsubmit="return false;">
+          <div class="col-12 col-md-4">
+            <label for="filter-search" class="form-label">Search by name</label>
+            <input type="search" id="filter-search" class="form-control" placeholder="e.g. pendulum" aria-label="Search results by name">
+          </div>
+          <div class="col-6 col-md-2">
+            <label for="filter-type" class="form-label">Experiment</label>
+            <select id="filter-type" class="form-select" aria-label="Filter by experiment type">
+              <option value="all">All</option>
+              <option value="circuit">Circuit</option>
+              <option value="projectile">Projectile</option>
+              <option value="pendulum">Pendulum</option>
+            </select>
+          </div>
+          <div class="col-6 col-md-2">
+            <label for="filter-status" class="form-label">Status</label>
+            <select id="filter-status" class="form-select" aria-label="Filter by status">
+              <option value="all">All</option>
+              <option value="Matched">Matched</option>
+              <option value="Needs repeat">Needs repeat</option>
+            </select>
+          </div>
+          <div class="col-6 col-md-2">
+            <label for="filter-sort" class="form-label">Sort by</label>
+            <select id="filter-sort" class="form-select" aria-label="Sort results">
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="name">Name A-Z</option>
+              <option value="status">Status</option>
+            </select>
+          </div>
+          <div class="col-6 col-md-2 d-flex gap-2">
+            <button type="button" class="btn btn-outline-secondary flex-grow-1" id="filter-reset">Reset</button>
+          </div>
+        </form>
+      </div></div>
+
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+        <p id="results-count" class="mb-0" aria-live="polite"></p>
+        <!-- Export sirf teacher ke liye -->
+        <button type="button" class="btn btn-outline-primary" id="btn-export-csv" data-role="teacher" hidden>Export CSV</button>
+      </div>
+      <div id="results-feedback" aria-live="polite"></div>
+      <div id="results-body"></div>
+    </section>
+
+    <!-- ========== Screen 6: Result Detail ========== -->
+    <section id="screen-detail" class="screen" aria-labelledby="detail-title" hidden>
+      <a href="#results" class="btn btn-link px-0">&larr; Back to Results</a>
+      <h1 id="detail-title" tabindex="-1">Result detail</h1>
+      <div id="detail-body"></div>
+    </section>
+
+    <!-- ========== Screen 7: Teacher Review (teacher only) ========== -->
+    <section id="screen-teacher" class="screen" aria-labelledby="teacher-title" hidden>
+      <h1 id="teacher-title" tabindex="-1">Teacher Review</h1>
+      <p class="text-muted-vl">What the students have tried so far.</p>
+      <div id="teacher-body"></div>
+    </section>
+
+    <!-- ========== Screen 8: How it works (About / Help) ========== -->
+    <section id="screen-help" class="screen" aria-labelledby="help-title" hidden>
+      <h1 id="help-title" tabindex="-1">How it works</h1>
+      <p class="lead page-lead">VirtualLab is a small physics lab that runs in your browser. We made it as our OJT project in 2026 (Harshi Yadav and Gourav Garg).</p>
+
+      <div class="card mb-3"><div class="card-body">
+        <h2 class="h5">Assumptions and limits</h2>
+        <p class="mb-2"><strong>This is a teaching demo, not a certified engineering tool.</strong> It uses simplified ideal-physics models:</p>
+        <ul class="mb-0">
+          <li>Battery is ideal: no internal resistance. Wires have zero resistance.</li>
+          <li>Resistors are ideal: the value never changes with heat. Only DC circuits, only series or simple parallel (no capacitors, inductors or AC).</li>
+          <li>Projectile: launched from the ground, lands on flat ground, no air resistance, constant gravity.</li>
+          <li>Pendulum: the formula T = 2π√(L/g) is for small angles. The simulation uses the full pendulum equation, so big angles (like 60°) show a clear difference from the formula.</li>
+          <li>"Matched" means the simulated value is within 2% of the formula. "Needs repeat" means it is outside 2% or the circuit was incomplete.</li>
+          <li>Student / Teacher view is only a switch to show or hide screens. There is no login, so it is not security.</li>
+          <li>Your data stays in this browser (localStorage). Clearing browser data removes it. Use "Reload sample data" in Teacher Review to get the samples back.</li>
+        </ul>
+      </div></div>
+
+      <div class="card mb-3"><div class="card-body">
+        <h2 class="h5">How to use each lab</h2>
+        <details class="mb-2" open><summary>Circuit Lab</summary>
+          <ol class="mt-2">
+            <li>Drag a Battery, Resistor and Bulb from the tray onto the lab table (or tap them to add).</li>
+            <li>Drag from one terminal dot to another to draw a wire. Click a wire and press Delete to remove it.</li>
+            <li>Click a part to select it. Press R to rotate, Delete to remove, and type new values in Properties.</li>
+            <li>Press Start simulation. The bulb glows, and the ammeter and voltmeter show real readings. Click a switch to open or close it.</li>
+            <li>Try the Series and Parallel presets, then type a name and press Save result.</li>
+          </ol>
+          <p class="mb-0">Open circuit: no current flows. Short circuit: no resistance in the path, so you get a warning instead of a misleading huge current.</p>
+        </details>
+        <details class="mb-2"><summary>Projectile Motion</summary>
+          <p class="mt-2 mb-0">Set speed, angle and gravity, then press Run. Range = v² sin(2θ) / g, time of flight = 2 v sin(θ) / g, maximum height = (v sin θ)² / (2g). The tool compares the step-by-step simulation with these formulas.</p>
+        </details>
+        <details class="mb-2"><summary>Simple Pendulum</summary>
+          <p class="mt-2 mb-0">Set length, start angle and gravity, then press Run. Theory period T = 2π√(L/g). Try 10° and then 60° to see where the small-angle formula stops being accurate.</p>
+        </details>
+        <details class="mb-0"><summary>Results and Teacher view</summary>
+          <p class="mt-2 mb-0">Open Results to search, filter, sort and open a row. Switch to Teacher view (top right) to see Teacher Review and to export a CSV of the rows on screen.</p>
+        </details>
+      </div></div>
+
+      <div class="card"><div class="card-body">
+        <h2 class="h5">Team</h2>
+        <p class="mb-0">Harshi Yadav and Gourav Garg. Track PST_PD_169, 4-week OJT, 2026.</p>
+      </div></div>
+    </section>
+  </main>
+
+  <footer class="site-footer container-xxl">
+    <div class="footer-row">
+      <p class="mb-0"><strong>VirtualLab</strong> by Harshi Yadav and Gourav Garg, OJT project 2026.</p>
+      <p class="mb-0">The physics is simplified (ideal parts, no air resistance), so use it for learning, not for real design.</p>
+      <ul class="footer-links"><li><a href="#circuit">Circuit Lab</a></li><li><a href="#projectile">Projectile</a></li><li><a href="#pendulum">Pendulum</a></li><li><a href="#help">How it works</a></li></ul>
+    </div>
+  </footer>
+
+  <!-- Bootstrap JS (sirf navbar toggle ke liye) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Hamari files. ORDER important hai: pehle pure files, phir UI files, last mein app.js -->
+  <script src="script4.js"></script>
+</body>
+</html>
